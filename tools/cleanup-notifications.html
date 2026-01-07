@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cleanup: Remove notifications</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; padding: 24px; background:#f6f8fa }
+    .card { background: white; padding:18px; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.06); max-width:760px }
+    button { padding:12px 18px; font-weight:700; border-radius:8px; border: none; cursor:pointer }
+    .danger { background:#e74c3c; color:white }
+    .ok { background:#2ecc71; color:white }
+    pre { background:#111; color:#0f0; padding:12px; border-radius:6px; max-height:360px; overflow:auto }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Limpiar subcolecciones `notifications`</h2>
+    <p>Este script buscará, por cada documento en <code>games</code>, la subcolección <code>players</code> y dentro de cada jugador eliminará todos los documentos en la subcolección <code>notifications</code>.</p>
+    <p><strong>Advertencia:</strong> Esta operación es destructiva e irreversible. Asegúrate de que tienes respaldo o de que realmente quieres eliminar estas notificaciones.</p>
+
+    <div style="display:flex; gap:12px; margin-bottom:12px">
+      <button id="scanBtn" class="ok">Buscar subcolecciones</button>
+      <button id="deleteBtn" class="danger" disabled>Eliminar todas las notificaciones</button>
+    </div>
+
+    <div id="status">Estado: inactivo</div>
+    <pre id="log" aria-live="polite"></pre>
+  </div>
+
+  <!-- Carga Firebase (v8, compatible con el proyecto) y el config local -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="../js/firebase-config.js"></script>
+
+  <script>
+    const log = (msg) => {
+      const p = document.getElementById('log');
+      p.textContent = p.textContent + msg + '\n';
+      console.log(msg);
+    };
+
+    let found = [];
+
+    async function scanNotifications() {
+      document.getElementById('status').textContent = 'Buscando subcolecciones...';
+      log('Iniciando escaneo de juegos...');
+
+      try {
+        const gamesRef = db.collection('games');
+        const gamesSnap = await gamesRef.get();
+        if (gamesSnap.empty) {
+          log('No se encontraron juegos (colección `games` vacía).');
+          document.getElementById('status').textContent = 'No hay juegos.';
+          return;
+        }
+
+        found = [];
+
+        for (const gdoc of gamesSnap.docs) {
+          const gameName = gdoc.id;
+          log(`Analizando juego: ${gameName}`);
+          const playersSnap = await gdoc.ref.collection('players').get();
+          if (playersSnap.empty) {
+            log('  - No hay jugadores en este juego.');
+            continue;
+          }
+          for (const pdoc of playersSnap.docs) {
+            const playerName = pdoc.id;
+            const notesRef = pdoc.ref.collection('notifications');
+            const notesSnap = await notesRef.get();
+            if (!notesSnap.empty) {
+              found.push({ game: gameName, player: playerName, count: notesSnap.size });
+              log(`  - Encontrado ${notesSnap.size} notificaciones para ${playerName} en ${gameName}`);
+            }
+          }
+        }
+
+        document.getElementById('status').textContent = `Escaneo finalizado. ${found.length} jugadores con notificaciones.`;
+        if (found.length > 0) document.getElementById('deleteBtn').disabled = false;
+      } catch (err) {
+        log('Error durante el escaneo: ' + err.message);
+        document.getElementById('status').textContent = 'Error durante el escaneo. Revisa la consola.';
+      }
+    }
+
+    // Borrado en lotes con commits periódicos (máx 450 ops por batch para sobrar)
+    async function deleteAllNotifications() {
+      if (!confirm('¿Confirmas eliminar todas las notificaciones encontradas? Esta operación NO se puede deshacer.')) return;
+
+      document.getElementById('status').textContent = 'Eliminando notificaciones...';
+      log('Iniciando borrado...');
+
+      let totalDeleted = 0;
+
+      try {
+        // Re-scan y borra
+        const gamesRef = db.collection('games');
+        const gamesSnap = await gamesRef.get();
+        for (const gdoc of gamesSnap.docs) {
+          for (const pdoc of (await gdoc.ref.collection('players').get()).docs) {
+            const notesRef = pdoc.ref.collection('notifications');
+            const notesSnap = await notesRef.get();
+            if (notesSnap.empty) continue;
+
+            // Delete in batches
+            let batch = db.batch();
+            let ops = 0;
+            for (const nd of notesSnap.docs) {
+              batch.delete(nd.ref);
+              ops++;
+              totalDeleted++;
+              if (ops >= 450) {
+                await batch.commit();
+                batch = db.batch();
+                ops = 0;
+                log('  - Commit parcial ejecutado');
+              }
+            }
+            if (ops > 0) await batch.commit();
+            log(`  - Eliminadas ${notesSnap.size} notificaciones de ${pdoc.id} en ${gdoc.id}`);
+          }
+        }
+
+        document.getElementById('status').textContent = `Borrado completado. Eliminadas ${totalDeleted} notificaciones.`;
+        log('Borrado finalizado. Total eliminadas: ' + totalDeleted);
+        document.getElementById('deleteBtn').disabled = true;
+      } catch (err) {
+        log('Error durante el borrado: ' + err.message);
+        document.getElementById('status').textContent = 'Error durante el borrado. Revisa la consola.';
+      }
+    }
+
+    document.getElementById('scanBtn').addEventListener('click', scanNotifications);
+    document.getElementById('deleteBtn').addEventListener('click', deleteAllNotifications);
+  </script>
+</body>
+</html>
