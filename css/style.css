@@ -656,3 +656,17 @@ body {
     .players-list { max-height: 480px; }
     .tab-btn { padding: 14px; font-size: 1rem; }
 }
+
+/* Bank header small-screen adjustments: prevent overflow and stack info */
+@media (max-width: 480px) {
+    .bank .header-content { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .bank .header-actions { width: 100%; display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; }
+    .bank .header-actions .game-info { order: 1; width: 100%; margin-bottom: 6px; }
+    .bank .header-actions button { order: 2; }
+    .bank .header-actions .btn-danger, .bank .header-actions .btn-secondary { padding: 8px 12px; font-size: 0.95rem; }
+}
+
+/* Global header button sizing to avoid very large buttons in header */
+.header .btn-danger { padding: 8px 12px; font-size: 0.95rem; }
+.header-actions { flex-wrap: wrap; gap: 8px; }
+.header-actions button { min-width: 0; }
