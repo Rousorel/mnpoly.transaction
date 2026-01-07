@@ -1,0 +1,2 @@
+# mnpoly.transaction
+Banca Electronica
