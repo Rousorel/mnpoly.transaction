@@ -26,7 +26,7 @@
             <div class="dashboard">
                 <!-- Sección de información del juego -->
                 <div class="section game-info-section">
-                    <h2><i class="fas fa-info-circle"></i> Información del Juego</h2>
+                    <h2><i class="fas fa-info-circle" aria-hidden="true"></i> Información del Juego</h2>
                     <div class="info-grid">
                         <div class="info-card">
                             <h3>Nombre del Juego</h3>
@@ -49,7 +49,7 @@
 
                 <!-- Sección de creación de jugadores -->
                 <div class="section create-players-section">
-                    <h2><i class="fas fa-user-plus"></i> Crear Jugadores</h2>
+                    <h2><i class="fas fa-user-plus" aria-hidden="true"></i> Crear Jugadores</h2>
                     <div class="create-player-form">
                         <div class="form-row">
                             <div class="form-group">
@@ -57,7 +57,7 @@
                                 <input type="text" id="newPlayerName" placeholder="Ej: Juan, María, etc.">
                             </div>
                             <button id="addPlayerBtn" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Agregar Jugador
+                                <i class="fas fa-plus" aria-hidden="true"></i> Agregar Jugador
                             </button>
                         </div>
                         <p class="form-hint">Puedes agregar entre 2 y 8 jugadores.</p>
@@ -74,7 +74,7 @@
 
                 <!-- Sección: pagar a jugador (Banco) -->
                 <div class="section bank-pay-section">
-                    <h2><i class="fas fa-hand-holding-usd"></i> Pagar a Jugador</h2>
+                    <h2><i class="fas fa-hand-holding-usd" aria-hidden="true"></i> Pagar a Jugador</h2>
                     <form id="bankPayForm" class="transaction-form">
                         <div class="form-group">
                             <label for="bankToPlayer">Seleccionar Jugador</label>
@@ -90,14 +90,14 @@
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-paper-plane"></i> Pagar
+                            <i class="fas fa-paper-plane" aria-hidden="true"></i> Pagar
                         </button>
                     </form>
                 </div>
 
                 <!-- Sección de transacciones recientes -->
                 <div class="section transactions-section">
-                    <h2><i class="fas fa-exchange-alt"></i> Transacciones Recientes</h2>
+                    <h2><i class="fas fa-exchange-alt" aria-hidden="true"></i> Transacciones Recientes</h2>
                     <div id="transactionsList" class="transactions-list">
                         <p class="empty-message">No hay transacciones registradas.</p>
                     </div>
